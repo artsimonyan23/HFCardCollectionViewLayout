@@ -26,18 +26,17 @@ struct CardLayoutSetupOptions {
     var scrollAreaBottom: CGFloat = 120
     var scrollShouldSnapCardHead: Bool = false
     var scrollStopCardsAtTop: Bool = true
-    
+
     var numberOfCards: Int = 15
 }
 
 class MenuTableViewController: UITableViewController {
-    
     var hideNavigationBar = false
     var hideToolBar = false
-    
+
     var defaults = CardLayoutSetupOptions()
     var numberFormatter = NumberFormatter()
-    
+
     @IBOutlet var textfieldNumberOfCards: UITextField?
     @IBOutlet var textfieldFirstMovableIndex: UITextField?
     @IBOutlet var textfieldCardHeadHeight: UITextField?
@@ -56,110 +55,108 @@ class MenuTableViewController: UITableViewController {
     @IBOutlet var textfieldScrollAreaBottom: UITextField?
     @IBOutlet var switchScrollShouldSnapCardHead: UISwitch?
     @IBOutlet var switchScrollStopCardsAtTop: UISwitch?
-    
+
     override func viewDidLoad() {
-        self.numberFormatter.locale = Locale(identifier: "en_US")
+        numberFormatter.locale = Locale(identifier: "en_US")
         super.viewDidLoad()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.isNavigationBarHidden = false
-        self.navigationController?.isToolbarHidden = true
+        navigationController?.isNavigationBarHidden = false
+        navigationController?.isToolbarHidden = true
     }
-    
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         UIApplication.shared.keyWindow?.endEditing(true)
-        self.navigationController?.isNavigationBarHidden = self.hideNavigationBar
-        self.navigationController?.isToolbarHidden = self.hideToolBar
+        navigationController?.isNavigationBarHidden = hideNavigationBar
+        navigationController?.isToolbarHidden = hideToolBar
     }
-    
+
     // MARK: Actions
-    
+
     @IBAction func resetAction() {
-        self.textfieldNumberOfCards?.text                   = String(self.defaults.numberOfCards)
-        self.textfieldFirstMovableIndex?.text               = String(self.defaults.firstMovableIndex)
-        self.textfieldCardHeadHeight?.text                  = self.stringFromFloat(self.defaults.cardHeadHeight)
-        self.switchCardShouldExpandHeadHeight?.isOn         = self.defaults.cardShouldExpandHeadHeight
-        self.switchCardShouldStretchAtScrollTop?.isOn       = self.defaults.cardShouldStretchAtScrollTop
-        self.textfieldCardMaximumHeight?.text               = self.stringFromFloat(self.defaults.cardMaximumHeight)
-        self.textfieldBottomNumberOfStackedCards?.text      = String(self.defaults.bottomNumberOfStackedCards)
-        self.switchBottomStackedCardsShouldScale?.isOn      = self.defaults.bottomStackedCardsShouldScale
-        self.textfieldBottomCardLookoutMargin?.text         = self.stringFromFloat(self.defaults.bottomCardLookoutMargin)
-        self.textfieldSpaceAtTopForBackgroundView?.text     = self.stringFromFloat(self.defaults.spaceAtTopForBackgroundView)
-        self.switchSpaceAtTopShouldSnap?.isOn               = self.defaults.spaceAtTopShouldSnap
-        self.textfieldSpaceAtBottom?.text                   = self.stringFromFloat(self.defaults.spaceAtBottom)
-        self.textfieldScrollAreaTop?.text                   = self.stringFromFloat(self.defaults.scrollAreaTop)
-        self.textfieldScrollAreaBottom?.text                = self.stringFromFloat(self.defaults.scrollAreaBottom)
-        self.switchScrollShouldSnapCardHead?.isOn           = self.defaults.scrollShouldSnapCardHead
-        self.switchScrollStopCardsAtTop?.isOn               = self.defaults.scrollStopCardsAtTop
-        self.textfieldBottomStackedCardsMinimumScale?.text  = self.stringFromFloat(self.defaults.bottomStackedCardsMinimumScale)
-        self.textfieldBottomStackedCardsMaximumScale?.text  = self.stringFromFloat(self.defaults.bottomStackedCardsMaximumScale)
+        textfieldNumberOfCards?.text = String(defaults.numberOfCards)
+        textfieldFirstMovableIndex?.text = String(defaults.firstMovableIndex)
+        textfieldCardHeadHeight?.text = stringFromFloat(defaults.cardHeadHeight)
+        switchCardShouldExpandHeadHeight?.isOn = defaults.cardShouldExpandHeadHeight
+        switchCardShouldStretchAtScrollTop?.isOn = defaults.cardShouldStretchAtScrollTop
+        textfieldCardMaximumHeight?.text = stringFromFloat(defaults.cardMaximumHeight)
+        textfieldBottomNumberOfStackedCards?.text = String(defaults.bottomNumberOfStackedCards)
+        switchBottomStackedCardsShouldScale?.isOn = defaults.bottomStackedCardsShouldScale
+        textfieldBottomCardLookoutMargin?.text = stringFromFloat(defaults.bottomCardLookoutMargin)
+        textfieldSpaceAtTopForBackgroundView?.text = stringFromFloat(defaults.spaceAtTopForBackgroundView)
+        switchSpaceAtTopShouldSnap?.isOn = defaults.spaceAtTopShouldSnap
+        textfieldSpaceAtBottom?.text = stringFromFloat(defaults.spaceAtBottom)
+        textfieldScrollAreaTop?.text = stringFromFloat(defaults.scrollAreaTop)
+        textfieldScrollAreaBottom?.text = stringFromFloat(defaults.scrollAreaBottom)
+        switchScrollShouldSnapCardHead?.isOn = defaults.scrollShouldSnapCardHead
+        switchScrollStopCardsAtTop?.isOn = defaults.scrollStopCardsAtTop
+        textfieldBottomStackedCardsMinimumScale?.text = stringFromFloat(defaults.bottomStackedCardsMinimumScale)
+        textfieldBottomStackedCardsMaximumScale?.text = stringFromFloat(defaults.bottomStackedCardsMaximumScale)
     }
-    
+
     // MARK: Navigation
-    
+
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let controller = segue.destination as? ExampleViewController {
-            
             var layoutOptions = CardLayoutSetupOptions()
-            layoutOptions.numberOfCards                  = self.getIntFromTextfield(self.textfieldNumberOfCards!)
-            layoutOptions.firstMovableIndex              = self.getIntFromTextfield(self.textfieldFirstMovableIndex!)
-            layoutOptions.cardHeadHeight                 = self.getFloatFromTextfield(self.textfieldCardHeadHeight!)
-            layoutOptions.cardShouldExpandHeadHeight     = self.switchCardShouldExpandHeadHeight!.isOn
-            layoutOptions.cardShouldStretchAtScrollTop   = self.switchCardShouldStretchAtScrollTop!.isOn
-            layoutOptions.cardMaximumHeight              = self.getFloatFromTextfield(self.textfieldCardMaximumHeight!)
-            layoutOptions.bottomNumberOfStackedCards     = self.getIntFromTextfield(self.textfieldBottomNumberOfStackedCards!)
-            layoutOptions.bottomStackedCardsShouldScale  = self.switchBottomStackedCardsShouldScale!.isOn
-            layoutOptions.bottomCardLookoutMargin        = self.getFloatFromTextfield(self.textfieldBottomCardLookoutMargin!)
-            layoutOptions.spaceAtTopForBackgroundView    = self.getFloatFromTextfield(self.textfieldSpaceAtTopForBackgroundView!)
-            layoutOptions.spaceAtTopShouldSnap           = self.switchSpaceAtTopShouldSnap!.isOn
-            layoutOptions.spaceAtBottom                  = self.getFloatFromTextfield(self.textfieldSpaceAtBottom!)
-            layoutOptions.scrollAreaTop                  = self.getFloatFromTextfield(self.textfieldScrollAreaTop!)
-            layoutOptions.scrollAreaBottom               = self.getFloatFromTextfield(self.textfieldScrollAreaBottom!)
-            layoutOptions.scrollShouldSnapCardHead       = self.switchScrollShouldSnapCardHead!.isOn
-            layoutOptions.scrollStopCardsAtTop           = self.switchScrollStopCardsAtTop!.isOn
-            layoutOptions.bottomStackedCardsMinimumScale = self.getFloatFromTextfield(self.textfieldBottomStackedCardsMinimumScale!)
-            layoutOptions.bottomStackedCardsMaximumScale = self.getFloatFromTextfield(self.textfieldBottomStackedCardsMaximumScale!)
-            
+            layoutOptions.numberOfCards = getIntFromTextfield(textfieldNumberOfCards!)
+            layoutOptions.firstMovableIndex = getIntFromTextfield(textfieldFirstMovableIndex!)
+            layoutOptions.cardHeadHeight = getFloatFromTextfield(textfieldCardHeadHeight!)
+            layoutOptions.cardShouldExpandHeadHeight = switchCardShouldExpandHeadHeight!.isOn
+            layoutOptions.cardShouldStretchAtScrollTop = switchCardShouldStretchAtScrollTop!.isOn
+            layoutOptions.cardMaximumHeight = getFloatFromTextfield(textfieldCardMaximumHeight!)
+            layoutOptions.bottomNumberOfStackedCards = getIntFromTextfield(textfieldBottomNumberOfStackedCards!)
+            layoutOptions.bottomStackedCardsShouldScale = switchBottomStackedCardsShouldScale!.isOn
+            layoutOptions.bottomCardLookoutMargin = getFloatFromTextfield(textfieldBottomCardLookoutMargin!)
+            layoutOptions.spaceAtTopForBackgroundView = getFloatFromTextfield(textfieldSpaceAtTopForBackgroundView!)
+            layoutOptions.spaceAtTopShouldSnap = switchSpaceAtTopShouldSnap!.isOn
+            layoutOptions.spaceAtBottom = getFloatFromTextfield(textfieldSpaceAtBottom!)
+            layoutOptions.scrollAreaTop = getFloatFromTextfield(textfieldScrollAreaTop!)
+            layoutOptions.scrollAreaBottom = getFloatFromTextfield(textfieldScrollAreaBottom!)
+            layoutOptions.scrollShouldSnapCardHead = switchScrollShouldSnapCardHead!.isOn
+            layoutOptions.scrollStopCardsAtTop = switchScrollStopCardsAtTop!.isOn
+            layoutOptions.bottomStackedCardsMinimumScale = getFloatFromTextfield(textfieldBottomStackedCardsMinimumScale!)
+            layoutOptions.bottomStackedCardsMaximumScale = getFloatFromTextfield(textfieldBottomStackedCardsMaximumScale!)
+
             controller.cardLayoutOptions = layoutOptions
-            
-            if(segue.identifier == "AsRootController") {
-                self.hideNavigationBar = true
-                self.hideToolBar = true
+
+            if segue.identifier == "AsRootController" {
+                hideNavigationBar = true
+                hideToolBar = true
                 controller.shouldSetupBackgroundView = true
             }
-            if(segue.identifier == "WithinNavigationController") {
-                self.hideNavigationBar = false
-                self.hideToolBar = true
+            if segue.identifier == "WithinNavigationController" {
+                hideNavigationBar = false
+                hideToolBar = true
             }
-            if(segue.identifier == "WithNavigationAndToolbar") {
-                self.hideNavigationBar = false
-                self.hideToolBar = false
+            if segue.identifier == "WithNavigationAndToolbar" {
+                hideNavigationBar = false
+                hideToolBar = false
             }
         }
     }
-    
+
     // MARK: Private functions
-    
+
     private func getIntFromTextfield(_ textfield: UITextField) -> Int {
-        if let n = self.numberFormatter.number(from: (textfield.text)!) {
+        if let n = numberFormatter.number(from: (textfield.text)!) {
             return n.intValue
         }
         return 0
     }
-    
+
     private func getFloatFromTextfield(_ textfield: UITextField) -> CGFloat {
-        if let n = self.numberFormatter.number(from: (textfield.text)!) {
+        if let n = numberFormatter.number(from: (textfield.text)!) {
             return CGFloat(truncating: n)
         }
         return 0
     }
-    
+
     private func stringFromFloat(_ float: CGFloat) -> String {
         return String(Int(float))
     }
-    
 }
