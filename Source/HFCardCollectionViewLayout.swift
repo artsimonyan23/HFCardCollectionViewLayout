@@ -525,8 +525,8 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
     private func initializeCardCollectionViewLayout() {
         collectionViewIsInitialized = true
 
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide(_:)), name: NSNotification.Name.UIKeyboardDidHide, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide(_:)), name: UIResponder.keyboardDidHideNotification, object: nil)
 
         collectionViewTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(collectionViewTapGestureHandler))
         collectionViewTapGestureRecognizer?.delegate = self
@@ -1023,7 +1023,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
                                 collectionView?.insertSubview(movingCardSnapshotCell!, belowSubview: belowCell)
                                 movingCardSnapshotCell?.layer.zPosition = belowCell.layer.zPosition
                             } else {
-                                collectionView?.sendSubview(toBack: movingCardSnapshotCell!)
+                                collectionView?.sendSubviewToBack(movingCardSnapshotCell!)
                             }
                         }
                     }
@@ -1086,7 +1086,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
         invalidateScrollTimer()
         autoscrollDisplayLink = CADisplayLink(target: self, selector: #selector(autoscrollHandler(displayLink:)))
         autoscrollDirection = direction
-        autoscrollDisplayLink?.add(to: .main, forMode: .commonModes)
+        autoscrollDisplayLink?.add(to: .main, forMode: .common)
     }
 
     private func invalidateScrollTimer() {
