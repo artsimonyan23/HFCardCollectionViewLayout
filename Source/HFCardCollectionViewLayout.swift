@@ -753,11 +753,24 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
         if minIndex < 0 {
             minIndex = 0
             maxIndex = revealedIndex + half + abs(revealedIndex - half)
+            if bottomNumberOfStackedCards % 2 == 1 {
+                maxIndex += 1
+            }
         } else if maxIndex >= collectionViewItemCount {
             minIndex = (collectionViewItemCount - 2 * half) - 1
             maxIndex = collectionViewItemCount - 1
+            if bottomNumberOfStackedCards % 2 == 1 {
+                minIndex -= 1
+            }
+        } else if bottomNumberOfStackedCards % 2 == 1 {
+            if minIndex > 0 {
+                minIndex -= 1
+            } else {
+                maxIndex += 1
+            }
         }
-
+        minIndex = max(0, minIndex)
+        maxIndex = min(collectionViewItemCount - 1, maxIndex)
         cardCollectionBottomCardsRevealedIndex = 0
 
         return Array(minIndex ... maxIndex).filter({ value -> Bool in
