@@ -8,7 +8,9 @@
 
 import UIKit
 
-class HFCardCollectionView: UICollectionView {
+open class HFCardCollectionView: UICollectionView {
+    public static let automaticDimension: CGFloat = CGFloat.greatestFiniteMagnitude
+    
     override open func insertItems(at indexPaths: [IndexPath]) {
         if let collectionViewLayout = collectionViewLayout as? HFCardCollectionViewLayout {
             collectionViewLayout.willInsert(indexPaths: indexPaths)

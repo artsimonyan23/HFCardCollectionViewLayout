@@ -76,9 +76,9 @@ class ExampleViewController: UICollectionViewController {
 
     @IBAction func deleteCardAtIndex0orSelected() {
         var index = 0
-//        if cardCollectionViewLayout!.revealedIndexPath >= 0 {
-//            index = cardCollectionViewLayout!.revealedIndex
-//        }
+        if let revealedIndex = cardCollectionViewLayout?.revealedIndex {
+            index = revealedIndex
+        }
         cardCollectionViewLayout?.flipRevealedCardBack(completion: {
             self.cardArray.remove(at: index)
             self.collectionView?.deleteItems(at: [IndexPath(item: index, section: 0)])
