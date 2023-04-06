@@ -250,19 +250,16 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
 
     /// Contains the revealed indexPath.
     /// ReadOnly.
-    open private(set) var revealedIndexPath: IndexPath? {
-        didSet {
-            guard let revealedIndexPath = revealedIndexPath, let collectionView = collectionView else {
-                revealedIndex = nil
-                return
-            }
-            revealedIndex = cardCollectionViewLayoutAttributes.firstIndex(where: { $0.indexPath == revealedIndexPath })
-        }
-    }
+    open private(set) var revealedIndexPath: IndexPath?
 
     /// Contains the revealed index.
     /// ReadOnly.
-    open private(set) var revealedIndex: Int?
+    open var revealedIndex: Int? {
+        if let revealedIndexPath = revealedIndexPath {
+            return cardCollectionViewLayoutAttributes[revealedIndexPath]?.zIndex
+        }
+        return nil
+    }
 
     // MARK: Public Actions
 
@@ -450,7 +447,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
     private var collectionViewTemporaryTop: CGFloat = 0
 
     private var cardCollectionBoundsSize: CGSize = .zero
-    private var cardCollectionViewLayoutAttributes = [HFCardCollectionViewLayoutAttributes]()
+    private var cardCollectionViewLayoutAttributes = [IndexPath: HFCardCollectionViewLayoutAttributes]()
     private var cardCollectionBottomCardsSet: [Int] = []
     private var cardCollectionBottomCardsRevealedIndex: Int = 0
     private func cardCollectionCellSize(for indexPath: IndexPath) -> CGSize {
@@ -573,16 +570,22 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
         return CGSize(width: contentWidth, height: contentHeight)
     }
 
+    override open func invalidateLayout(with context: UICollectionViewLayoutInvalidationContext) {
+        if context.invalidateDataSourceCounts {
+            collectionViewItemCount = 0
+            if let collectionView = collectionView, collectionView.numberOfSections > 0 {
+                let sections = collectionView.numberOfSections
+                collectionViewItemCount = (0 ..< sections).reduce(0) { total, current -> Int in
+                    total + collectionView.numberOfItems(inSection: current)
+                }
+            }
+        }
+        super.invalidateLayout(with: context)
+    }
+
     /// Tells the layout object to update the current layout.
     override open func prepare() {
         super.prepare()
-
-        if let collectionView = collectionView, collectionView.numberOfSections > 0 {
-            let sections = collectionView.numberOfSections
-            collectionViewItemCount = (0 ..< sections).reduce(0) { total, current -> Int in
-                total + collectionView.numberOfItems(inSection: current)
-            }
-        }
 
         if collectionViewIsInitialized == false {
             initializeCardCollectionViewLayout()
@@ -593,16 +596,14 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
 
     /// A layout attributes object containing the information to apply to the item’s cell.
     override open func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        return cardCollectionViewLayoutAttributes[indexPath.item]
+        return cardCollectionViewLayoutAttributes[indexPath]
     }
 
     /// An array of UICollectionViewLayoutAttributes objects representing the layout information for the cells and views. The default implementation returns nil.
     ///
     /// - Parameter rect: The rectangle
     override open func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        let attributes = cardCollectionViewLayoutAttributes.filter { layout -> Bool in
-            layout.frame.intersects(rect)
-        }
+        let attributes = cardCollectionViewLayoutAttributes.filter { $1.frame.intersects(rect) }.compactMap({ $1 })
         return attributes
     }
 
@@ -690,9 +691,9 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
         }
     }
 
-    private func generateCardCollectionViewLayoutAttributes() -> [HFCardCollectionViewLayoutAttributes] {
-        guard let collectionView = collectionView, collectionView.numberOfSections > 0 else { return [] }
-        var cardCollectionViewLayoutAttributes: [HFCardCollectionViewLayoutAttributes] = []
+    private func generateCardCollectionViewLayoutAttributes() -> [IndexPath: HFCardCollectionViewLayoutAttributes] {
+        guard let collectionView = collectionView, collectionView.numberOfSections > 0 else { return [:] }
+        var cardCollectionViewLayoutAttributes = [IndexPath: HFCardCollectionViewLayoutAttributes]()
         var shouldReloadAllItems = false
         if !self.cardCollectionViewLayoutAttributes.isEmpty && collectionViewItemCount == self.cardCollectionViewLayoutAttributes.count {
             cardCollectionViewLayoutAttributes = self.cardCollectionViewLayoutAttributes
@@ -739,12 +740,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
                     } else {
                         generateBottomCardsAttribute(cardLayoutAttribute, bottomIndex: &bottomIndex)
                     }
-
-                    if itemsIdx < cardCollectionViewLayoutAttributes.count {
-                        cardCollectionViewLayoutAttributes[itemsIdx] = cardLayoutAttribute
-                    } else {
-                        cardCollectionViewLayoutAttributes.append(cardLayoutAttribute)
-                    }
+                    cardCollectionViewLayoutAttributes[indexPath] = cardLayoutAttribute
                 }
                 itemsIdx += 1
             }
@@ -957,9 +953,9 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
             switch movingCardGestureRecognizer.state {
             case .began:
                 movingCardGestureStartLocation = movingCardGestureRecognizer.location(in: collectionView)
-                if let indexPath = collectionView?.indexPathForItem(at: movingCardGestureStartLocation) {
+                if let indexPath = collectionView?.indexPathForItem(at: movingCardGestureStartLocation), let attr = cardCollectionViewLayoutAttributes[indexPath] {
                     movingCardActive = true
-                    if indexPath.item < firstMovableIndex {
+                    if attr.zIndex < firstMovableIndex {
                         movingCardActive = false
                         return
                     }
@@ -972,7 +968,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
                         movingCardSnapshotCell?.layer.zPosition = cell.layer.zPosition
                         collectionView?.insertSubview(movingCardSnapshotCell!, aboveSubview: cell)
                         cell.alpha = 0.0
-                        movingCardSelectedIndex = indexPath.item
+                        movingCardSelectedIndex = attr.zIndex
                         UIView.animate(withDuration: 0.2, animations: {
                             self.movingCardSnapshotCell?.frame.origin.y -= moveUpOffset
                         })
@@ -999,9 +995,9 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
                         tempIndexPath = collectionView?.indexPathForItem(at: movingCardLastTouchedLocation)
                     }
 
-                    if let currentTouchedIndexPath = tempIndexPath {
+                    if let currentTouchedIndexPath = tempIndexPath, let attr = cardCollectionViewLayoutAttributes[currentTouchedIndexPath] {
                         movingCardLastTouchedLocation = movingCardGestureCurrentLocation
-                        if currentTouchedIndexPath.item < firstMovableIndex {
+                        if attr.zIndex < firstMovableIndex {
                             return
                         }
                         if movingCardLastTouchedIndexPath == nil && currentTouchedIndexPath != movingCardStartIndexPath! {
@@ -1020,7 +1016,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
                                 })
                             }
 
-                            movingCardSelectedIndex = currentTouchedIndexPath.item
+                            movingCardSelectedIndex = attr.zIndex
                             collectionView?.dataSource?.collectionView?(collectionView!, moveItemAt: currentTouchedIndexPath, to: movingCardLastTouchedIndexPath!)
                             UIView.performWithoutAnimation {
                                 self.collectionView?.moveItem(at: currentTouchedIndexPath, to: self.movingCardLastTouchedIndexPath!)
