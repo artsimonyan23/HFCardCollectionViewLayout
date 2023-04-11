@@ -456,11 +456,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
             return size
         }
         let w = collectionView.bounds.width - collectionView.contentInset.left - collectionView.contentInset.right
-        var h = defaultCardHeight
-        if h == HFCardCollectionView.automaticDimension {
-            let cell = collectionView.cellForItem(at: indexPath)
-            h = cell?.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height ?? 250
-        }
+        var h = delegate?.cardCollectionViewLayout?(self, heightForItemAt: indexPath) ?? defaultCardHeight
         let size = CGSize(width: w, height: h)
         return size
     }
@@ -749,7 +745,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
     }
 
     private func generateBottomIndexes() -> [Int] {
-        guard let revealedIndexPath = revealedIndexPath, let revealedIndex = revealedIndex else {
+        guard let revealedIndex = revealedIndex else {
             if collapseAllCards == false {
                 return []
             } else {
@@ -800,8 +796,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
             attribute.alpha = 1.0
         }
 
-        let currentFrame = CGRect(x: 0, y: spaceAtTopForBackgroundView + cardHeadHeight * CGFloat(currentIndex), width: cardCollectionCellSize(for: attribute.indexPath).width, height: cardCollectionCellSize(for: attribute.indexPath).height)
-
+        let currentFrame = CGRect(origin: CGPoint(x: 0, y: spaceAtTopForBackgroundView + cardHeadHeight * CGFloat(currentIndex)), size: cardCollectionCellSize(for: attribute.indexPath))
         if contentOffsetTop >= 0 && contentOffsetTop <= spaceAtTopForBackgroundView {
             attribute.frame = currentFrame
         } else if contentOffsetTop > spaceAtTopForBackgroundView {
@@ -836,36 +831,38 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
 
     private func generateRevealedCardAttribute(_ attribute: HFCardCollectionViewLayoutAttributes) {
         attribute.isRevealed = true
+        let cellSize = cardCollectionCellSize(for: attribute.indexPath)
         if collectionViewItemCount == 1 {
-            attribute.frame = CGRect(x: 0, y: contentOffsetTop + spaceAtTopForBackgroundView + 0.01, width: cardCollectionCellSize(for: attribute.indexPath).width, height: cardCollectionCellSize(for: attribute.indexPath).height)
+            attribute.frame = CGRect(origin: CGPoint(x: 0, y: contentOffsetTop + spaceAtTopForBackgroundView + 0.01), size: cellSize)
         } else {
-            attribute.frame = CGRect(x: 0, y: contentOffsetTop + 0.01, width: cardCollectionCellSize(for: attribute.indexPath).width, height: cardCollectionCellSize(for: attribute.indexPath).height)
+            attribute.frame = CGRect(origin: CGPoint(x: 0, y: contentOffsetTop + 0.01), size: cellSize)
         }
     }
 
     private func generateBottomCardsAttribute(_ attribute: HFCardCollectionViewLayoutAttributes, bottomIndex: inout Int) {
         let index = attribute.zIndex
+        let cellSize = cardCollectionCellSize(for: attribute.indexPath)
         let posY = cardHeadHeight * CGFloat(index)
-        let currentFrame = CGRect(x: collectionView!.frame.origin.x, y: posY, width: cardCollectionCellSize(for: attribute.indexPath).width, height: cardCollectionCellSize(for: attribute.indexPath).height)
+        let currentFrame = CGRect(origin: CGPoint(x: collectionView!.frame.origin.x, y: posY), size: cellSize)
         let maxY = collectionView!.contentOffset.y + collectionView!.frame.height
         let contentFrame = CGRect(x: 0, y: collectionView!.contentOffset.y, width: collectionView!.frame.width, height: maxY)
         if cardCollectionBottomCardsSet.contains(index) {
             let margin: CGFloat = bottomCardLookoutMargin
             let baseHeight = (collectionView!.frame.height + collectionView!.contentOffset.y) - contentInsetBottom - (margin * bottomCardCount)
             let scale: CGFloat = calculateCardScale(forIndex: bottomIndex)
-            let yAddition: CGFloat = (cardCollectionCellSize(for: attribute.indexPath).height - (cardCollectionCellSize(for: attribute.indexPath).height * scale)) / 2
+            let yAddition: CGFloat = (cellSize.height - (cellSize.height * scale)) / 2
             let yPos: CGFloat = baseHeight + (CGFloat(bottomIndex) * margin) - yAddition
-            attribute.frame = CGRect(x: 0, y: yPos, width: cardCollectionCellSize(for: attribute.indexPath).width, height: cardCollectionCellSize(for: attribute.indexPath).height)
+            attribute.frame = CGRect(origin: CGPoint(x: 0, y: yPos), size: cellSize)
             attribute.transform = CGAffineTransform(scaleX: scale, y: scale)
             bottomIndex += 1
         } else if contentFrame.intersects(currentFrame) {
             attribute.isHidden = true
             attribute.alpha = 0.0
-            attribute.frame = CGRect(x: 0, y: maxY, width: cardCollectionCellSize(for: attribute.indexPath).width, height: cardCollectionCellSize(for: attribute.indexPath).height)
+            attribute.frame = CGRect(origin: CGPoint(x: 0, y: maxY), size: cellSize)
         } else {
             attribute.isHidden = true
             attribute.alpha = 0.0
-            attribute.frame = CGRect(x: 0, y: posY, width: cardCollectionCellSize(for: attribute.indexPath).width, height: cardCollectionCellSize(for: attribute.indexPath).height)
+            attribute.frame = CGRect(origin: CGPoint(x: 0, y: posY), size: cellSize)
         }
         attribute.isRevealed = false
     }
@@ -910,7 +907,7 @@ open class HFCardCollectionViewLayout: UICollectionViewLayout, UIGestureRecogniz
         if collectionViewItemCount == 1 || revealedCardIsFlipped == true {
             return
         }
-        if let revealedCardPanGestureRecognizer = revealedCardPanGestureRecognizer, let revealedCardCell = revealedCardCell, let revealedIndex = revealedIndex {
+        if let revealedCardPanGestureRecognizer = revealedCardPanGestureRecognizer, let revealedCardCell = revealedCardCell {
             let gestureTouchLocation = revealedCardPanGestureRecognizer.location(in: collectionView)
             let shiftY: CGFloat = (gestureTouchLocation.y - revealedCardPanGestureTouchLocationY > 0) ? gestureTouchLocation.y - revealedCardPanGestureTouchLocationY : 0
 

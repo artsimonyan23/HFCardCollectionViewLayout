@@ -44,4 +44,9 @@ import UIKit
     /// - Parameter collectionViewLayout: The current HFCardCollectionViewLayout.
     /// - Parameter sizeForItemAt: Index of the card.
     @objc optional func cardCollectionViewLayout(_ collectionViewLayout: HFCardCollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize
+    
+    /// The height of card. Will be ignored, if func sizeForItemAt is implemented.
+    /// - Parameter collectionViewLayout: The current HFCardCollectionViewLayout.
+    /// - Parameter heightForItemAt: Index of the card.
+    @objc optional func cardCollectionViewLayout(_ collectionViewLayout: HFCardCollectionViewLayout, heightForItemAt indexPath: IndexPath) -> CGFloat
 }
